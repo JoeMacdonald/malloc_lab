@@ -65,11 +65,10 @@
 #define MINBLOCKSIZE 32
 #define LISTSIZE 12
 
+
 void *seg_list[LISTSIZE];
 void *heap_ptr;
 int instructionsExecuted;
-
-
 
 //function prototypes for helper functions
 static void write_word(void *ptr, size_t val);
@@ -132,7 +131,7 @@ bool mm_init(void)
     write_word(heap_ptr + HEADFOOT, PACK(2*HEADFOOT,1));
     write_word(heap_ptr + (2*HEADFOOT), PACK(2*HEADFOOT,1)); 
     printBlock(heap_ptr + (2*HEADFOOT));
-    mm_checkheap(1);
+    //mm_checkheap(1);
     heap_ptr = extendHeap(INITHEAP);
     //printf("heap_ptr: %p\n", heap_ptr);
     //printBlock(heap_ptr);
@@ -165,7 +164,7 @@ void* malloc(size_t size)
     else { //add space for header and footer
         asize = align(size + 16); //optimal alignment
     }
-    printf("After alignment: %lu\n", asize);
+    //printf("After alignment: %lu\n", asize);
     //("got here...\n");
     //find the first bin the list that is compatible with our size
     int index = 0;
@@ -175,7 +174,7 @@ void* malloc(size_t size)
     //printf("found list\n");
     //if there are no spots at that index, increase and try again
     while ((ptr == NULL) && (index < 12)) {
-        printf("index: %d\n", index);
+        //printf("index: %d\n", index);
         ptr = seg_list[index];
         index++;
     }
@@ -185,18 +184,18 @@ void* malloc(size_t size)
     }
     //printBlock(seg_list[index+1]);
     //printf("Got through first while loop\n");
-    printf("asize: %lu\n", asize);
-    printf("index: %d\n", index);
-    printf("ptr: %p\n", ptr);
+    //printf("asize: %lu\n", asize);
+    //printf("index: %d\n", index);
+    //printf("ptr: %p\n", ptr);
     if (index == 11){ //we must scan through that list
         if (ptr == NULL) { //no values in 5 either 
             printf("Extend the Heap in MALLOC by size %lu\n", max(asize, INITHEAP));
             ptr = extendHeap(max(asize, INITHEAP));
         }
         while ((asize > getSize(headerAddress(ptr)))) {
-            printf("true\n");
+            //printf("true\n");
             ptr = nextListAddPointer(ptr);
-            printf("nextListAddPointer: %p\n", ptr);
+            //printf("nextListAddPointer: %p\n", ptr);
             if (ptr == NULL) {
                 printf("Extend the Heap in MALLOC by size %lu\n", max(asize, INITHEAP));
                 ptr = extendHeap(max(asize, INITHEAP));
@@ -213,7 +212,6 @@ void* malloc(size_t size)
     ptr = place(ptr, asize);
 
     //this is now the space of our newly allocated block
-    mm_checkheap(1);
     printf("End of MALLOC\n");
     instructionsExecuted++;
     printf("instructionsExecuted: %d\n", instructionsExecuted);
@@ -297,38 +295,51 @@ bool mm_checkheap(int lineno)
     //printf("heap_ptr: %p\n", heap_ptr);
     while (getSize(headerAddress(heap_ptr)) != 0){
         //printf("Inside loop\n");
+
+        //size check
         size = getSize(headerAddress(heap_ptr));
         if (size != getSize(footerAddress(heap_ptr))){
-            printf("Header size != footer size\n");
+            printf("Header size != footer size!\n");
         }
+
+        //adjacent free check
+        if (!getAlloc(headerAddress(heap_ptr))){
+            if (!getAlloc(headerAddress(nextBlock(heap_ptr)))){
+                printf("Two adjacent free blocks!\n");
+            }
+        }
+
         printBlock(heap_ptr);
         heap_ptr = heap_ptr + size;
         //printf("looping...\n");
     }
-    /*
+    
     printf("CHECK LIST\n");
     int index = 0;
     void* ptr = seg_list[index];
 
     //print out list elements
     while (index < 12) {
-        printf("Block %d----", index);
-        if (seg_list[index] == NULL) {
+        printf("Block %d----\n", index);
+        if (ptr == NULL) {
             index++;
             ptr = seg_list[index];
         }
         else {
-            setPointer(ptr, nextListAddPointer(ptr));
-            //printf(" ptr: %p", ptr);
-            printBlock(ptr);
-            while (nextListAddPointer(ptr) != NULL){
-                ptr = nextListAddPointer;
+            while (ptr != NULL){
+                printBlock(ptr);
+                if (index != placeList(getSize(headerAddress(ptr)))){
+                    printf("Block in wrong list!\n");
+                }
+                if (getAlloc(headerAddress(ptr))){
+                    printf("Block is not free!\n");
+                }
+                ptr = nextListAddPointer(ptr);
             }
             index++;
         }
-        printf("\n");
     }
-    */
+    
 
 #endif /* DEBUG */
     return true;
@@ -448,7 +459,7 @@ static void *extendHeap(size_t size) {
 //we will need to keep track of these within the data structure
 static void *coalesce(void *ptr) {
     printf("COALESCE\n");
-    mm_checkheap(1);
+    //mm_checkheap(1);
     size_t prev = getAlloc(headerAddress(prevBlock(ptr)));
     size_t next = getAlloc(headerAddress(nextBlock(ptr)));
     size_t size = getSize(headerAddress(ptr));
@@ -497,6 +508,8 @@ static void *coalesce(void *ptr) {
     }
 
     insertListElement(ptr, size);
+    mm_checkheap(1);
+    printf("End of COALESCE\n");
     return ptr;
 }
 
@@ -568,8 +581,8 @@ void* place(void* ptr, size_t asize){
             printf("First block in list: ");
             printBlock(seg_list[0]);
         }
-        printBlock(ptr);
-        printBlock(nextBlock(ptr));
+        //printBlock(ptr);
+        //printBlock(nextBlock(ptr));
         //removeListElement(ptr);
         //NEED TO DEAL WITH DELETING THAT FIRST ELEMENT ONCE WE CHANGE IT
         insertListElement(nextBlock(ptr), leftover);
@@ -584,12 +597,10 @@ void* place(void* ptr, size_t asize){
 
 static void removeListElement(void *ptr) {
     printf("REMOVE LIST ELEMENT\n");
+    printBlock(ptr);
     int list = 0;
     size_t size = getSize(headerAddress(ptr));
     list = placeList(size);
-    //printf("ptr: %p\n", ptr);
-    //printf("size: %lu\n", size);
-    //printf("list: %d\n", list);
     //find correct list
     //there exists something attached to the front
     if (prevListAddPointer(ptr) != NULL){ 
@@ -612,17 +623,12 @@ static void removeListElement(void *ptr) {
             seg_list[list] = NULL;
         }
     }
-    /*
-    if (seg_list[0] != NULL){
-        printf("First block in list: ");
-        printBlock(seg_list[0]);
-    }*/
     printf("END OF REMOVE\n");
-    //mm_checkheap(1);
 }
 
 static void insertListElement(void *ptr, size_t size){
     printf("INSERT LIST ELEMENT\n");
+    printBlock(ptr);
     /*
     if (seg_list[0] != NULL){
         printf("First block in list: ");
@@ -636,7 +642,7 @@ static void insertListElement(void *ptr, size_t size){
 
     //find list that fits with our size
     index = placeList(size);
-
+    printf("index of block to be placed: %d\n", index);
     curr_head_ptr = seg_list[index];
     //always throw in the front of the list
     if (curr_head_ptr != NULL) { //no element in this spot
@@ -646,7 +652,8 @@ static void insertListElement(void *ptr, size_t size){
         setPointer(pListPoint(curr_head_ptr), ptr);
         //printf("index: %d\n", index);
         seg_list[index] = ptr;
-        //printBlock(seg_list[index]);
+        printf("index after placement: %d\n", index);
+        printBlock(seg_list[index]);
     }
     else { //curr_head is equal to NULL
         //printf("curr_head is equal to NULL\n");
@@ -661,6 +668,8 @@ static void insertListElement(void *ptr, size_t size){
         //printf("index: %d\n", index);
         //printf("value of seg_list[0] before insert: %p\n", seg_list[0]);
         seg_list[index] = ptr;
+        printf("index after placement: %d\n", index);
+        printBlock(seg_list[index]);
         //printf("seg_list[index] after insert: ");
         /*printBlock(seg_list[index]);
         if (seg_list[0] != NULL){
@@ -763,6 +772,7 @@ int placeList(size_t asize) {
 size_t max(size_t a, size_t b) {
     return (a > b) ? a : b;
 }
+
 
 
 
