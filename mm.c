@@ -36,7 +36,7 @@
  * If you want debugging output, uncomment the following. Be sure not
  * to have debugging enabled in your final submission
  */
-#define DEBUG
+#//define DEBUG
 
 #ifdef DEBUG
 /* When debugging is enabled, the underlying functions get called */
@@ -116,7 +116,7 @@ bool mm_init(void)
     //create bins/linked list objects
     //initial size of array
     instructionsExecuted = 0;
-    printf("INIT\n");
+    //printf("INIT\n");
     int list;
     heap_ptr = (size_t*) heap_ptr; //points to beginning of heap
 
@@ -131,14 +131,14 @@ bool mm_init(void)
     //offset by 8, create header and footer of prologue 
     write_word(heap_ptr + HEADFOOT, PACK(2*HEADFOOT,1));
     write_word(heap_ptr + (2*HEADFOOT), PACK(2*HEADFOOT,1)); 
-    printBlock(heap_ptr + (2*HEADFOOT));
+    //printBlock(heap_ptr + (2*HEADFOOT));
     //mm_checkheap(1);
     heap_ptr = extendHeap(INITHEAP);
     //printf("heap_ptr: %p\n", heap_ptr);
     //printBlock(heap_ptr);
-    printf("END OF INIT\n");
+    //printf("END OF INIT\n");
     instructionsExecuted++;
-    printf("instructionsExecuted: %d\n", instructionsExecuted);
+    //printf("instructionsExecuted: %d\n", instructionsExecuted);
     return true;
 }
 
@@ -147,12 +147,12 @@ bool mm_init(void)
  */
 void* malloc(size_t size)
 {
-    printf("MALLOC of size %lu\n", size);
+    //printf("MALLOC of size %lu\n", size);
     void* ptr = NULL;
     size_t asize;
     if (seg_list[0] != NULL){
-        printf("First block in list: ");
-        printBlock(seg_list[0]);
+        //printf("First block in list: ");
+        //printBlock(seg_list[0]);
     }
     if (size == 0) {    //bad request
         return NULL;
@@ -213,9 +213,9 @@ void* malloc(size_t size)
     ptr = place(ptr, asize);
 
     //this is now the space of our newly allocated block
-    printf("End of MALLOC\n");
+    //printf("End of MALLOC\n");
     instructionsExecuted++;
-    printf("instructionsExecuted: %d\n", instructionsExecuted);
+    //printf("instructionsExecuted: %d\n", instructionsExecuted);
     return ptr;
 }
 
@@ -224,10 +224,10 @@ void* malloc(size_t size)
  */
 void free(void* ptr)
 {
-    printf("FREE (%p of size %lu)\n", ptr, getSize(headerAddress(ptr)));
+    //printf("FREE (%p of size %lu)\n", ptr, getSize(headerAddress(ptr)));
     if (seg_list[0] != NULL){
-        printf("First block in list: ");
-        printBlock(seg_list[0]);
+        //printf("First block in list: ");
+        //printBlock(seg_list[0]);
     }
     size_t size = getSize(headerAddress(ptr));
     write_word(headerAddress(ptr), PACK(size, 0));
@@ -235,7 +235,7 @@ void free(void* ptr)
     insertListElement(ptr, size);
     coalesce(ptr);
     instructionsExecuted++;
-    printf("instructionsExecuted: %d\n", instructionsExecuted);
+    //printf("instructionsExecuted: %d\n", instructionsExecuted);
     return;
 }
 
@@ -429,7 +429,7 @@ size_t *prevBlock(void* ptr) {
 
 //we need more space, so extend the heap and create one big free block. 
 static void *extendHeap(size_t size) {
-    printf("EXTEND HEAP\n");
+    //printf("EXTEND HEAP\n");
     size_t *p;
     size_t asize;
 
@@ -459,13 +459,13 @@ static void *extendHeap(size_t size) {
 //coalesce left, coalesce both
 //we will need to keep track of these within the data structure
 static void *coalesce(void *ptr) {
-    printf("COALESCE\n");
+    //printf("COALESCE\n");
     //mm_checkheap(1);
     size_t prev = getAlloc(headerAddress(prevBlock(ptr)));
     size_t next = getAlloc(headerAddress(nextBlock(ptr)));
     size_t size = getSize(headerAddress(ptr));
-    printf("prev: %lu\n", prev);
-    printf("next: %lu\n", next);
+    //printf("prev: %lu\n", prev);
+    //printf("next: %lu\n", next);
     //printf("size: %lu\n", size);
     //no coalescing needed
     /*
@@ -510,7 +510,7 @@ static void *coalesce(void *ptr) {
 
     insertListElement(ptr, size);
     mm_checkheap(1);
-    printf("End of COALESCE\n");
+    //printf("End of COALESCE\n");
     return ptr;
 }
 
@@ -536,7 +536,7 @@ size_t* nListPoint(void* ptr) {
 
 //placing data inside a free block
 void* place(void* ptr, size_t asize){
-    printf("PLACE\n");
+    //printf("PLACE\n");
     /*
     if (seg_list[0] != NULL){
         printf("First block in list: ");
@@ -579,8 +579,8 @@ void* place(void* ptr, size_t asize){
         write_word(headerAddress(nextBlock(ptr)), PACK(leftover, 0));
         write_word(footerAddress(nextBlock(ptr)), PACK(leftover, 0));
         if (seg_list[0] != NULL){
-            printf("First block in list: ");
-            printBlock(seg_list[0]);
+            //printf("First block in list: ");
+            //printBlock(seg_list[0]);
         }
         //printBlock(ptr);
         //printBlock(nextBlock(ptr));
@@ -598,7 +598,7 @@ void* place(void* ptr, size_t asize){
 
 static void removeListElement(void *ptr) {
     //MUST REMOVE FROM CORRECT LIST, WE'RE CHANGING IDEAS 
-    printf("REMOVE LIST ELEMENT\n");
+    //printf("REMOVE LIST ELEMENT\n");
     //printBlock(ptr);
     int index = 0;
     size_t size = getSize(headerAddress(ptr));
@@ -642,8 +642,8 @@ static void removeListElement(void *ptr) {
 }
 
 static void insertListElement(void *ptr, size_t size){
-    printf("INSERT LIST ELEMENT\n");
-    printBlock(ptr);
+    //printf("INSERT LIST ELEMENT\n");
+    //printBlock(ptr);
     /*
     if (seg_list[0] != NULL){
         printf("First block in list: ");
@@ -657,7 +657,7 @@ static void insertListElement(void *ptr, size_t size){
 
     //find list that fits with our size
     index = placeList(size);
-    printf("index of block to be placed: %d\n", index);
+    //printf("index of block to be placed: %d\n", index);
     curr_head_ptr = seg_list[index];
     //always throw in the front of the list
     if (curr_head_ptr != NULL) { //no element in this spot
@@ -667,8 +667,8 @@ static void insertListElement(void *ptr, size_t size){
         setPointer(pListPoint(curr_head_ptr), ptr);
         //printf("index: %d\n", index);
         seg_list[index] = ptr;
-        printf("index after placement: %d\n", index);
-        printBlock(seg_list[index]);
+        //printf("index after placement: %d\n", index);
+        //printBlock(seg_list[index]);
     }
     else { //curr_head is equal to NULL
         //printf("curr_head is equal to NULL\n");
@@ -683,8 +683,8 @@ static void insertListElement(void *ptr, size_t size){
         //printf("index: %d\n", index);
         //printf("value of seg_list[0] before insert: %p\n", seg_list[0]);
         seg_list[index] = ptr;
-        printf("index after placement: %d\n", index);
-        printBlock(seg_list[index]);
+        //printf("index after placement: %d\n", index);
+        //printBlock(seg_list[index]);
         //printf("seg_list[index] after insert: ");
         /*printBlock(seg_list[index]);
         if (seg_list[0] != NULL){
@@ -693,7 +693,7 @@ static void insertListElement(void *ptr, size_t size){
         }*/
     }
     //mm_checkheap(1);
-    printf("End of INSERT\n");
+    //printf("End of INSERT\n");
 }
 
 static void setPointer(void *address, void *ptr){
