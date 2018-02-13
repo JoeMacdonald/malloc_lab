@@ -1,3 +1,4 @@
+
 /*
  * mm.c
  *
@@ -180,7 +181,7 @@ void* malloc(size_t size)
     }
     index--;
     if (seg_list[index] != NULL){
-        printBlock(seg_list[index]);
+        //printBlock(seg_list[index]);
     }
     //printBlock(seg_list[index+1]);
     //printf("Got through first while loop\n");
@@ -189,7 +190,7 @@ void* malloc(size_t size)
     //printf("ptr: %p\n", ptr);
     if (index == 11){ //we must scan through that list
         if (ptr == NULL) { //no values in 5 either 
-            printf("Extend the Heap in MALLOC by size %lu\n", max(asize, INITHEAP));
+            //printf("Extend the Heap in MALLOC by size %lu\n", max(asize, INITHEAP));
             ptr = extendHeap(max(asize, INITHEAP));
         }
         while ((asize > getSize(headerAddress(ptr)))) {
@@ -197,7 +198,7 @@ void* malloc(size_t size)
             ptr = nextListAddPointer(ptr);
             //printf("nextListAddPointer: %p\n", ptr);
             if (ptr == NULL) {
-                printf("Extend the Heap in MALLOC by size %lu\n", max(asize, INITHEAP));
+                //printf("Extend the Heap in MALLOC by size %lu\n", max(asize, INITHEAP));
                 ptr = extendHeap(max(asize, INITHEAP));
                 break;
             }
@@ -596,34 +597,48 @@ void* place(void* ptr, size_t asize){
 }
 
 static void removeListElement(void *ptr) {
+    //MUST REMOVE FROM CORRECT LIST, WE'RE CHANGING IDEAS 
     printf("REMOVE LIST ELEMENT\n");
-    printBlock(ptr);
-    int list = 0;
+    //printBlock(ptr);
+    int index = 0;
     size_t size = getSize(headerAddress(ptr));
-    list = placeList(size);
     //find correct list
-    //there exists something attached to the front
-    if (prevListAddPointer(ptr) != NULL){ 
-        //printf("something on the front\n");
-        //its in the middle of two blocks
-        if (nextListAddPointer(ptr) != NULL){
+    index = placeList(size);
+    //find correct list
+
+    if (prevListAddPointer(ptr) == NULL){
+        //printf("front of list\n");
+         //front of list
+        if (nextListAddPointer(ptr) == NULL){
+            //printf("only element in list\n");
+            //only element in list
+            seg_list[index] = NULL;
+        }
+        else {
+            //elements behind the list
+            //printf("elements following current block\n");
+            setPointer(pListPoint(nextListAddPointer(ptr)), NULL);
+            seg_list[index] = nextListAddPointer(ptr);
+        }
+    }
+    else {
+        //printf("not front of list\n");
+        //not front of list
+        if (nextListAddPointer(ptr) == NULL){
+            //back of lsit
+            //printf("back of list\n");
+            setPointer(nListPoint(prevListAddPointer(ptr)), NULL);
+        }
+        else {
+            //middle of list
+            //printf("middle of list\n");
             setPointer(nListPoint(prevListAddPointer(ptr)), nextListAddPointer(ptr));
             setPointer(pListPoint(nextListAddPointer(ptr)), prevListAddPointer(ptr));
         }
-        else {
-            setPointer(nListPoint(prevListAddPointer(ptr)), NULL);
-            seg_list[list] = prevListAddPointer(ptr);
-        }
-    } 
-    else {
-        if (nextListAddPointer(ptr) != NULL) {
-            setPointer(pListPoint(nextListAddPointer(ptr)), NULL);
-        }
-        else {
-            seg_list[list] = NULL;
-        }
     }
-    printf("END OF REMOVE\n");
+        
+
+    //printf("END OF REMOVE\n");
 }
 
 static void insertListElement(void *ptr, size_t size){
@@ -772,8 +787,3 @@ int placeList(size_t asize) {
 size_t max(size_t a, size_t b) {
     return (a > b) ? a : b;
 }
-
-
-
-
-
